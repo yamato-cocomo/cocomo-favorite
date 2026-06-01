@@ -31,3 +31,17 @@ area.innerHTML = `
   <p>判定：${result.buy ? "🟢 買い" : "🔴 スルー"}</p>
   <p>理由：${result.reason}</p>
 `;
+function runEV() {
+  const winRate = parseFloat(document.getElementById("winRateInput").value);
+  const odds = parseFloat(document.getElementById("oddsInput").value);
+
+  const result = calculateEV(winRate, odds);
+
+  const area = document.getElementById("resultArea");
+  area.innerHTML = `
+    <p>EV値：${result.ev.toFixed(2)}</p>
+    <p>判定：${result.buy ? "🟢 買い" : "🔴 スルー"}</p>
+    <p>理由：${result.reason}</p>
+  `;
+}
+
