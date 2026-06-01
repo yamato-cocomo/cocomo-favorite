@@ -50,6 +50,22 @@ function calculateEV(winRate, odds) {
 }
 
 // ===============================
+// ココモ状態表示
+// ===============================
+function updateKokomoStatus(place) {
+  const k = kokomo[place];
+  const statusBox = document.getElementById(`${place}_kokomoStatus`);
+  const nextBet = kokomoSequence[k.index];
+
+  statusBox.innerHTML = `
+    <p><b>ココモ状態</b></p>
+    <p>段階：${k.index + 1}（賭け金：${nextBet}円）</p>
+    <p>連敗：${k.loss}</p>
+    <p>累計損失：${k.totalLoss}円</p>
+  `;
+}
+
+// ===============================
 // EV判定（東 or 西）
 // ===============================
 function runEV(place) {
@@ -77,7 +93,6 @@ function runEV(place) {
     area.innerHTML += `<p>賭け金：${betAmount}円</p>`;
     area.innerHTML += `<p style="color:green;">📢 買いシグナル発生！</p>`;
 
-    // ブラウザ通知（許可されていれば）
     if ("Notification" in window && Notification.permission === "granted") {
       new Notification("買いシグナル", {
         body: `${place === "east" ? "東" : "西"}会場：EVプラス＆買い判定`,
@@ -90,6 +105,8 @@ function runEV(place) {
   if (k.loss >= 6) {
     area.innerHTML += `<p style="color:red;">⚠️ 6連敗 → 自動停止</p>`;
   }
+
+  updateKokomoStatus(place);
 }
 
 // ===============================
@@ -119,6 +136,8 @@ function updateKokomo(place, isWin) {
   if (k.loss >= 6) {
     area.innerHTML += `<p style="color:red;">⚠️ 6連敗 → 自動停止</p>`;
   }
+
+  updateKokomoStatus(place);
 }
 
 // ===============================
@@ -143,6 +162,14 @@ async function pasteOdds(place) {
     alert("クリップボードの読み取りに失敗しました（HTTPS環境か確認してください）");
   }
 }
+
+// ===============================
+// 初期表示
+// ===============================
+window.addEventListener("load", () => {
+  updateKokomoStatus("east");
+  updateKokomoStatus("west");
+});
 
 // ===============================
 // 自動更新（1分ごと）
