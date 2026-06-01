@@ -23,3 +23,11 @@ const raceData = {
 // EV判定
 const result = calculateEV(raceData.winRate, raceData.odds2);
 console.log("EV判定結果:", result);
+
+const area = document.getElementById("resultArea");
+
+area.innerHTML = `
+  <p>EV値：${result.ev.toFixed(2)}</p>
+  <p>判定：${result.buy ? "🟢 買い" : "🔴 スルー"}</p>
+  <p>理由：${result.reason}</p>
+`;
