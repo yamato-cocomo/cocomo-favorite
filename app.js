@@ -11,6 +11,28 @@ let kokomo = {
 };
 
 // ===============================
+// 通知許可
+// ===============================
+function requestNotificationPermission() {
+  const status = document.getElementById("notifyStatus");
+
+  if (!("Notification" in window)) {
+    status.innerText = "このブラウザは通知に対応していません";
+    return;
+  }
+
+  Notification.requestPermission().then((perm) => {
+    if (perm === "granted") {
+      status.innerText = "通知が有効になりました";
+    } else if (perm === "denied") {
+      status.innerText = "通知が拒否されました";
+    } else {
+      status.innerText = "通知設定が保留状態です";
+    }
+  });
+}
+
+// ===============================
 // EV計算
 // ===============================
 function calculateEV(winRate, odds) {
@@ -53,6 +75,14 @@ function runEV(place) {
   if (result.buy) {
     const betAmount = kokomoSequence[k.index];
     area.innerHTML += `<p>賭け金：${betAmount}円</p>`;
+    area.innerHTML += `<p style="color:green;">📢 買いシグナル発生！</p>`;
+
+    // ブラウザ通知（許可されていれば）
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification("買いシグナル", {
+        body: `${place === "east" ? "東" : "西"}会場：EVプラス＆買い判定`,
+      });
+    }
   } else {
     area.innerHTML += `<p>賭け金：0円（スルー）</p>`;
   }
