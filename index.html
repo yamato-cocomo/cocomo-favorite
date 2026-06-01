@@ -2,42 +2,65 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>EVフィルター半自動システム</title>
+  <title>EVフィルター半自動システム（東西2会場）</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 
 <body>
-  <h2>EVフィルター半自動システム</h2>
+  <h2>EVフィルター半自動システム（東西2会場）</h2>
 
-  <!-- 入力フォーム -->
+  <!-- 東会場 -->
+  <h3>【東会場】</h3>
   <div>
     <label>的中率（winRate）</label><br>
-    <input id="winRateInput" type="number" step="0.01" value="0.32">
+    <input id="east_winRate" type="number" step="0.01" value="0.32">
 
     <br><br>
 
     <label>2番人気オッズ（odds2）</label><br>
-    <input id="oddsInput" type="number" step="0.1" value="3.4">
+    <input id="east_odds" type="number" step="0.1" value="3.4">
 
     <br><br>
 
-    <button onclick="runEV()">EV判定する</button>
+    <button onclick="runEV('east')">EV判定する</button>
 
     <br><br>
 
-    <!-- 勝敗ボタン -->
-    <button onclick="updateKokomo(true)">勝ち</button>
-    <button onclick="updateKokomo(false)">負け</button>
+    <button onclick="updateKokomo('east', true)">勝ち</button>
+    <button onclick="updateKokomo('east', false)">負け</button>
+  </div>
+
+  <div id="east_resultArea">
+    東会場の結果がここに表示されます
   </div>
 
   <hr>
 
-  <!-- 結果表示エリア -->
-  <div id="resultArea">
-    判定結果がここに表示されます
+  <!-- 西会場 -->
+  <h3>【西会場】</h3>
+  <div>
+    <label>的中率（winRate）</label><br>
+    <input id="west_winRate" type="number" step="0.01" value="0.32">
+
+    <br><br>
+
+    <label>2番人気オッズ（odds2）</label><br>
+    <input id="west_odds" type="number" step="0.1" value="3.4">
+
+    <br><br>
+
+    <button onclick="runEV('west')">EV判定する</button>
+
+    <br><br>
+
+    <button onclick="updateKokomo('west', true)">勝ち</button>
+    <button onclick="updateKokomo('west', false)">負け</button>
   </div>
 
-  <!-- app.js は一番下に置く -->
+  <div id="west_resultArea">
+    西会場の結果がここに表示されます
+  </div>
+
   <script src="app.js"></script>
 </body>
 </html>
