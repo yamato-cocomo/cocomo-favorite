@@ -122,6 +122,20 @@
 
   <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
   <script src="app.js?v=9999"></script>
+<script>
+  // URLパラメータからオッズを受け取る
+  const params = new URLSearchParams(window.location.search);
+
+  if (params.has("east_odds")) {
+    document.getElementById("east_odds").value = params.get("east_odds");
+    runEV("east");
+  }
+
+  if (params.has("west_odds")) {
+    document.getElementById("west_odds").value = params.get("west_odds");
+    runEV("west");
+  }
+</script>
 
 
   <script>
