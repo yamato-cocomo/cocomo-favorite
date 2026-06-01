@@ -5,33 +5,33 @@
   <title>EVフィルター半自動システム</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
+
 <body>
   <h2>EVフィルター半自動システム</h2>
-  
-  <div id="resultArea">
-  判定結果がここに表示されます
-</div>
 
-  <script src="app.js"></script>
+  <!-- 入力フォーム -->
   <div>
-  <label>的中率（winRate）</label><br>
-  <input id="winRateInput" type="number" step="0.01" value="0.32">
+    <label>的中率（winRate）</label><br>
+    <input id="winRateInput" type="number" step="0.01" value="0.32">
 
-  <br><br>
+    <br><br>
 
-  <label>2番人気オッズ（odds2）</label><br>
-  <input id="oddsInput" type="number" step="0.1" value="3.4">
+    <label>2番人気オッズ（odds2）</label><br>
+    <input id="oddsInput" type="number" step="0.1" value="3.4">
 
-  <br><br>
+    <br><br>
 
-  <button onclick="runEV()">EV判定する</button>
-</div>
+    <button onclick="runEV()">EV判定する</button>
+  </div>
 
-<hr>
+  <hr>
 
-<div id="resultArea">
-  判定結果がここに表示されます
-</div>
+  <!-- 結果表示エリア -->
+  <div id="resultArea">
+    判定結果がここに表示されます
+  </div>
 
+  <!-- app.js は一番下に置く -->
+  <script src="app.js"></script>
 </body>
 </html>
