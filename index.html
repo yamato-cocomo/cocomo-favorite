@@ -23,6 +23,22 @@
 
     <button onclick="runEV()">EV判定する</button>
   </div>
+function updateKokomo(isWin) {
+  if (isWin) {
+    // 勝ったらリセット
+    lossCount = 0;
+    totalLoss = 0;
+    currentBetIndex = 0;
+    console.log("勝利 → ココモリセット");
+  } else {
+    // 負けたら次の賭け金へ
+    lossCount++;
+    totalLoss += kokomoSequence[currentBetIndex];
+    currentBetIndex = Math.min(currentBetIndex + 1, kokomoSequence.length - 1);
+
+    console.log(`負け：${lossCount}連敗 / 累計損失：${totalLoss}円`);
+  }
+}
 
   <hr>
 
