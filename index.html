@@ -5,6 +5,9 @@
   <title>EVフィルター半自動システム（東西2会場）</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
+  <!-- Swiper CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -12,16 +15,16 @@
       padding: 10px;
     }
 
+    h2, h3 {
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+
     .card {
       background: white;
       padding: 15px;
-      margin-bottom: 20px;
       border-radius: 12px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
-
-    h2, h3 {
-      margin-top: 0;
     }
 
     button {
@@ -35,24 +38,13 @@
     }
 
     button:hover {
-      opacity: 0.8;
+      opacity: 0.85;
     }
 
-    .danger {
-      background: #dc3545;
-    }
-
-    .success {
-      background: #28a745;
-    }
-
-    .paste {
-      background: #6f42c1;
-    }
-
-    .notify {
-      background: #ff9800;
-    }
+    .danger { background: #dc3545; }
+    .success { background: #28a745; }
+    .paste { background: #6f42c1; }
+    .notify { background: #ff9800; }
 
     .result-box {
       background: #fafafa;
@@ -60,19 +52,120 @@
       border-radius: 8px;
       margin-top: 10px;
       border: 1px solid #ddd;
+      font-size: 14px;
+    }
+
+    .swiper {
+      width: 100%;
+      padding-top: 10px;
+      padding-bottom: 20px;
+    }
+
+    .swiper-slide {
+      display: flex;
+      justify-content: center;
+    }
+
+    .card input {
+      width: 100%;
+      padding: 6px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
     }
   </style>
 </head>
 
 <body>
-
   <button class="notify" onclick="requestNotificationPermission()">🔔 買いシグナル通知を有効化</button>
   <p id="notifyStatus"></p>
 
   <h2>EVフィルター半自動システム（東西2会場）</h2>
 
-  <!-- 東会場カード -->
-  <div class="card">
-    <h3>【東会場】</h3>
+  <div class="swiper">
+    <div class="swiper-wrapper">
 
-    <label>的中率
+      <!-- 東会場スライド -->
+      <div class="swiper-slide">
+        <div class="card" style="width:100%; max-width:480px;">
+          <h3>【東会場】</h3>
+
+          <label>的中率（winRate）</label><br>
+          <input id="east_winRate" type="number" step="0.01" value="0.32">
+
+          <br><br>
+
+          <label>2番人気オッズ（odds2）</label><br>
+          <input id="east_odds" type="number" step="0.1" value="3.4">
+
+          <br><br>
+
+          <button onclick="runEV('east')">EV判定</button>
+          <button class="paste" onclick="pasteOdds('east')">オッズ貼り付け</button>
+
+          <br>
+
+          <button class="success" onclick="updateKokomo('east', true)">勝ち</button>
+          <button class="danger" onclick="updateKokomo('east', false)">負け</button>
+
+          <div id="east_kokomoStatus" class="result-box">
+            ココモ状態：初期状態
+          </div>
+
+          <div id="east_resultArea" class="result-box">
+            東会場の結果がここに表示されます
+          </div>
+        </div>
+      </div>
+
+      <!-- 西会場スライド -->
+      <div class="swiper-slide">
+        <div class="card" style="width:100%; max-width:480px;">
+          <h3>【西会場】</h3>
+
+          <label>的中率（winRate）</label><br>
+          <input id="west_winRate" type="number" step="0.01" value="0.32">
+
+          <br><br>
+
+          <label>2番人気オッズ（odds2）</label><br>
+          <input id="west_odds" type="number" step="0.1" value="3.4">
+
+          <br><br>
+
+          <button onclick="runEV('west')">EV判定</button>
+          <button class="paste" onclick="pasteOdds('west')">オッズ貼り付け</button>
+
+          <br>
+
+          <button class="success" onclick="updateKokomo('west', true)">勝ち</button>
+          <button class="danger" onclick="updateKokomo('west', false)">負け</button>
+
+          <div id="west_kokomoStatus" class="result-box">
+            ココモ状態：初期状態
+          </div>
+
+          <div id="west_resultArea" class="result-box">
+            西会場の結果がここに表示されます
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="swiper-pagination"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+  <script src="app.js"></script>
+
+  <script>
+    const swiper = new Swiper('.swiper', {
+      loop: false,
+      pagination: {
+        el: '.swiper-pagination',
+      },
+    });
+  </script>
+</body>
+</html>
