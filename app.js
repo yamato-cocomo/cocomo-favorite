@@ -1,7 +1,7 @@
 console.log("EV system loaded");
 
 // ===============================
-// ココモ設定（東西別々に管理）
+// ココモ設定（東西別々）
 // ===============================
 const kokomoSequence = [100, 100, 200, 300, 500, 800];
 
@@ -34,8 +34,15 @@ function runEV(place) {
   const winRate = parseFloat(document.getElementById(`${place}_winRate`).value);
   const odds = parseFloat(document.getElementById(`${place}_odds`).value);
 
+  if (isNaN(winRate) || isNaN(odds)) {
+    document.getElementById(`${place}_resultArea`).innerHTML =
+      "<p>入力値が不正です</p>";
+    return;
+  }
+
   const result = calculateEV(winRate, odds);
   const area = document.getElementById(`${place}_resultArea`);
+  const k = kokomo[place];
 
   area.innerHTML = `
     <p>EV値：${result.ev.toFixed(2)}</p>
@@ -43,8 +50,6 @@ function runEV(place) {
     <p>理由：${result.reason}</p>
   `;
 
-  // ココモ賭け金表示
-  const k = kokomo[place];
   if (result.buy) {
     const betAmount = kokomoSequence[k.index];
     area.innerHTML += `<p>賭け金：${betAmount}円</p>`;
@@ -52,7 +57,6 @@ function runEV(place) {
     area.innerHTML += `<p>賭け金：0円（スルー）</p>`;
   }
 
-  // 6連敗ストップ
   if (k.loss >= 6) {
     area.innerHTML += `<p style="color:red;">⚠️ 6連敗 → 自動停止</p>`;
   }
@@ -84,6 +88,29 @@ function updateKokomo(place, isWin) {
 
   if (k.loss >= 6) {
     area.innerHTML += `<p style="color:red;">⚠️ 6連敗 → 自動停止</p>`;
+  }
+}
+
+// ===============================
+// オッズ貼り付け（クリップボードから）
+// ===============================
+async function pasteOdds(place) {
+  try {
+    const text = await navigator.clipboard.readText();
+    const match = text.match(/[0-9.]+/);
+
+    if (!match) {
+      alert("オッズらしき数値が見つかりませんでした");
+      return;
+    }
+
+    const odds = parseFloat(match[0]);
+    document.getElementById(`${place}_odds`).value = odds;
+
+    const area = document.getElementById(`${place}_resultArea`);
+    area.innerHTML += `<p>📥 オッズ自動取得：${odds}</p>`;
+  } catch (e) {
+    alert("クリップボードの読み取りに失敗しました（HTTPS環境か確認してください）");
   }
 }
 
