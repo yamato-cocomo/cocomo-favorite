@@ -1,551 +1,259 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>展開AI指数</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
-      background: #f2f2f7;
-    }
-    #resultArea {
-      padding: 12px;
-      margin-bottom: 220px;
-    }
-    .horse-card {
-      background: #fff;
-      border-radius: 12px;
-      padding: 14px;
-      margin-bottom: 16px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      font-size: 18px;
-      font-weight: bold;
-    }
-    .ai-index {
-      font-size: 26px;
-      margin: 10px 0;
-      font-weight: bold;
-      color: #0a7a0a;
-    }
-    .section {
-      margin: 8px 0;
-      font-size: 14px;
-      line-height: 1.4;
-    }
-    .past-run {
-      padding: 8px;
-      margin: 6px 0;
-      background: #f7f7f7;
-      border-radius: 8px;
-      font-size: 13px;
-    }
-    .toggle-detail,
-    .toggle-learn {
-      width: 100%;
-      margin-top: 8px;
-      padding: 8px;
-      background: #eaeaea;
-      border: none;
-      border-radius: 6px;
-      font-size: 14px;
-    }
-    .learn-block {
-      background: #f0f8ff;
-      padding: 10px;
-      border-radius: 8px;
-      margin-top: 8px;
-      font-size: 13px;
-      line-height: 1.4;
-    }
-    #actionBar {
-      position: fixed;
-      bottom: 160px;
-      left: 0;
-      width: 100%;
-      background: #fff;
-      padding: 10px;
-      border-top: 1px solid #ddd;
-      text-align: center;
-    }
-    #analyzeBtn {
-      width: 90%;
-      max-width: 480px;
-      padding: 10px;
-      font-size: 16px;
-      border-radius: 8px;
-      border: none;
-      background: #007aff;
-      color: #fff;
-      font-weight: bold;
-    }
-    #inputArea {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      background: #fafafa;
-      padding: 10px;
-      border-top: 1px solid #ddd;
-    }
-    #raceInput {
-      width: 100%;
-      height: 120px;
-      font-size: 14px;
-      padding: 8px;
-      resize: none;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>展開AI指数（URL版）</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  background: #f2f2f7;
+}
+#resultArea {
+  padding: 12px;
+  margin-bottom: 220px;
+}
+.horse-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 18px;
+  font-weight: bold;
+}
+.ai-index {
+  font-size: 26px;
+  margin: 10px 0;
+  font-weight: bold;
+  color: #0a7a0a;
+}
+.section {
+  margin: 8px 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+#actionBar {
+  position: fixed;
+  bottom: 160px;
+  left: 0;
+  width: 100%;
+  background: #fff;
+  padding: 10px;
+  border-top: 1px solid #ddd;
+  text-align: center;
+}
+#analyzeBtn {
+  width: 90%;
+  max-width: 480px;
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: none;
+  background: #007aff;
+  color: #fff;
+  font-weight: bold;
+}
+#inputArea {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: #fafafa;
+  padding: 10px;
+  border-top: 1px solid #ddd;
+}
+#raceInput {
+  width: 100%;
+  height: 120px;
+  font-size: 14px;
+  padding: 8px;
+  resize: none;
+}
+</style>
 </head>
+
 <body>
 
-  <div id="resultArea"></div>
+<div id="resultArea"></div>
 
-  <div id="actionBar">
-    <button id="analyzeBtn">解析する</button>
-  </div>
+<div id="actionBar">
+  <button id="analyzeBtn">URLから解析する</button>
+</div>
 
-  <div id="inputArea">
-    <textarea id="raceInput" placeholder="ここにnetkeibaの出馬表をそのまま貼り付けてください"></textarea>
-  </div>
+<div id="inputArea">
+  <textarea id="raceInput" placeholder="netkeibaの出馬表URLを貼り付けてください"></textarea>
+</div>
 
-  <script>
-    // ===== 学習データ辞書 =====
-    let horseLearn = {};
+<script>
+// ===============================
+// URL → HTML取得（プロキシ経由）
+// ===============================
+async function fetchHTMLfromURL(url) {
+  const api = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url);
+  const res = await fetch(api);
+  if (!res.ok) throw new Error("取得失敗");
+  return await res.text();
+}
 
-    function loadHorseLearn() {
-      const data = localStorage.getItem("horseLearn");
-      if (data) horseLearn = JSON.parse(data);
-    }
-    function saveHorseLearn() {
-      localStorage.setItem("horseLearn", JSON.stringify(horseLearn));
-    }
+// ===============================
+// HTML → DOM
+// ===============================
+function htmlToDOM(html) {
+  return new DOMParser().parseFromString(html, "text/html");
+}
 
-    // ===== 解析ボタン =====
-    document.getElementById("analyzeBtn").addEventListener("click", runAnalysis);
+// ===============================
+// 出馬表パース（netkeibaのHTML構造前提）
+// ===============================
+function parseRaceFromDOM(doc) {
+  const rows = [...doc.querySelectorAll("table.Shutuba_Table tr")];
+  const horses = [];
 
-    function runAnalysis() {
-      const text = document.getElementById("raceInput").value.trim();
-      if (!text) {
-        alert("出馬表を貼り付けてください");
-        return;
-      }
+  rows.forEach(row => {
+    const nameEl = row.querySelector("td.HorseInfo a");
+    if (!nameEl) return;
 
-      const horses = parseRaceTable(text);   // 出馬表 → horses[]
-      enrichHorseMeta(horses);               // 脚質・ラップ・適性・展開癖など
-      const ctx = extractRaceContext(text);  // 距離・馬場
-      const pace = predictPace(horses);      // 展開予測（high/middle/slow）
+    const h = {};
+    h.name = nameEl.textContent.trim();
+    h.jockey = row.querySelector("td.Jockey a")?.textContent.trim() || "";
+    h.popularity = row.querySelector("td.Popular span")?.textContent.trim() || "";
+    h.odds = row.querySelector("td.Odds span")?.textContent.trim() || "";
+    h.weight = row.querySelector("td.Weight")?.textContent.trim() || "";
+    h.runs = []; // URL版ではまず空のまま
 
-      horses.forEach(h => {
-        h.pacePredict = pace;
-        h.ai = calcAI(h, ctx, pace);
-      });
+    horses.push(h);
+  });
 
-      renderAllCards(horses);
-    }
+  return horses;
+}
 
-    // ===== パースエンジン（高速版の骨組み） =====
-    function parseRaceTable(text) {
-      const lines = text.split("\n").map(l => l.trim());
-      const horses = [];
+// ===============================
+// レース情報抽出（距離・馬場）
+// ===============================
+function extractRaceContextFromDOM(doc) {
+  const ctx = {};
 
-      // ここは実際の出馬表形式に合わせて調整する
-      lines.forEach(line => {
-        const h = parseLineFast(line);
-        if (h) horses.push(h);
-      });
+  // 距離（例：ダ1800m）
+  const distText = doc.querySelector(".RaceData01")?.textContent || "";
+  const distMatch = distText.match(/(\d+)m/);
+  if (distMatch) ctx.distance = parseInt(distMatch[1]);
 
-      return horses;
-    }
+  // 馬場（例：ダート・良）
+  const babaMatch = distText.match(/(良|稍重|重|不良)/);
+  if (babaMatch) ctx.baba = babaMatch[1];
 
-    function parseLineFast(line) {
-      // 先頭に「馬番 馬名」がある想定: "1 ロブチェン ..."
-      const nameMatch = line.match(/^[0-9]+\s+([^\s]+)/);
-      if (!nameMatch) return null;
-      const name = nameMatch[1];
+  return ctx;
+}
 
-      const regex = /(\d+)m|(良|稍重|重|不良)|(\d+)-(\d+)-(\d+)-(\d+)|(\d+\.\d+)\s*秒|上がり\s*(\d+\.\d+)|`\((\d+)位\)`/g;
+// ===============================
+// メタ（暫定：あとで学習ロジックに差し替え）
+// ===============================
+function enrichHorseMeta(horses) {
+  horses.forEach(h => {
+    h.style = "先行";
+    h.lapType = "加速型";
+    h.paceBias = { nigeBias: 0, senkoBias: 0, holdBias: 0, accelBias: 0 };
+    h.distanceType = "中距離型";
+    h.babaType = "良馬場型";
+    h.paceCompatibility = 10;
+    h.lastRunSummary = "前走情報（URL版では簡易）";
+  });
+}
 
-      let distance = null;
-      let baba = null;
-      let pass = null;
-      let time = null;
-      let agari = null;
-      let agariRank = null;
+// ===============================
+// 展開予測（簡易）
+// ===============================
+function predictPace(horses) {
+  // ここはあとで「脚質集計」ロジックに差し替え
+  return "middle";
+}
 
-      let m;
-      while ((m = regex.exec(line)) !== null) {
-        if (m[1]) distance = parseInt(m[1]);
-        if (m[2]) baba = m[2];
-        if (m[3]) pass = [m[3], m[4], m[5], m[6]].map(Number);
-        if (m[7]) time = parseFloat(m[7]);
-        if (m[8]) agari = parseFloat(m[8]);
-        if (m[9]) agariRank = parseInt(m[9]);
-      }
+// ===============================
+// AI指数（本物ロジックに差し替え可能な形）
+// ===============================
+function calcAI(h, ctx, pace) {
+  // ここは前にまとめた本物ロジックを貼り替えればOK
+  return 50 + (h.paceCompatibility || 0);
+}
 
-      return {
-        name,
-        distance,
-        baba,
-        pass,
-        raceTime: time,
-        agariTime: agari,
-        lastAgariRank: agariRank,
-        runs: [] // 過去走はあとで埋める前提
-      };
-    }
+// ===============================
+// カードUI
+// ===============================
+function renderAllCards(horses) {
+  const area = document.getElementById("resultArea");
+  let html = "";
 
-    function extractRaceContext(text) {
-      const ctx = {};
-      const dist = text.match(/(\d+)m/);
-      if (dist) ctx.distance = parseInt(dist[1]);
-      const baba = text.match(/\b(良|稍重|重|不良)\b/);
-      if (baba) ctx.baba = baba[1];
-      return ctx;
-    }
-
-    // ===== メタ学習 =====
-    function enrichHorseMeta(horses) {
-      horses.forEach(h => {
-        const learn = horseLearn[h.name];
-
-        if (learn) {
-          h.style = learn.style ?? h.style;
-          h.lapType = learn.lapType ?? h.lapType;
-          h.paceBias = learn.paceBias ?? h.paceBias;
-          h.distanceType = learn.distanceType ?? h.distanceType;
-          h.babaType = learn.babaType ?? h.babaType;
-          h.paceCompatibility = learn.paceCompatibility ?? h.paceCompatibility;
-          h.updated = learn.updated;
-        }
-
-        const runs = h.runs || [];
-
-        h.style = guessStyleFrom3Runs(runs);
-        h.lapType = learnLapTypeFromRuns(runs);
-        h.paceBias = learnPaceBiasFromRuns(runs);
-        h.distanceType = learnDistanceTypeFromRuns(runs);
-        h.babaType = learnBabaTypeFromRuns(runs);
-        h.paceCompatibility = totalPaceCompatibility(h);
-        h.lastRunSummary = buildLastRunSummary(h);
-
-        horseLearn[h.name] = {
-          style: h.style,
-          lapType: h.lapType,
-          paceBias: h.paceBias,
-          distanceType: h.distanceType,
-          babaType: h.babaType,
-          paceCompatibility: h.paceCompatibility,
-          updated: new Date().toISOString().slice(0,10)
-        };
-      });
-
-      saveHorseLearn();
-    }
-
-    // ===== 展開予測（学習型） =====
-    const paceLearn = {
-      nigeWeight: 2,
-      senkoWeight: 1,
-      firstPosWeight: 0.5,
-      lapAccelWeight: 0.5,
-      lapFadeWeight: -0.5,
-      paceHistory: []
-    };
-
-    function paceToNum(p) {
-      if (p === "high") return 3;
-      if (p === "middle") return 2;
-      if (p === "slow") return 1;
-      return 2;
-    }
-
-    function predictPace(horses) {
-      const nige = horses.filter(h => h.style === "逃げ").length;
-      const senko = horses.filter(h => h.style === "先行").length;
-
-      let score = 0;
-      score += nige * paceLearn.nigeWeight;
-      score += senko * paceLearn.senkoWeight;
-
-      horses.forEach(h => {
-        if (!h.paceBias) return;
-        score += (h.paceBias.nigeBias || 0) * 0.3;
-        score += (h.paceBias.senkoBias || 0) * 0.2;
-        score -= (h.paceBias.holdBias || 0) * 0.2;
-        score += (h.paceBias.accelBias || 0) * 0.3;
-      });
-
-      if (score >= 6) return "high";
-      if (score <= 2) return "slow";
-      return "middle";
-    }
-
-    // ===== 相性・適性系 =====
-    function paceLapCompatibility(h) {
-      if (!h.paceBias || !h.lapType) return 0;
-      let score = 0;
-      if (h.paceBias.nigeBias > 0 && h.lapType === "減速型") score += 4;
-      if (h.paceBias.nigeBias > 0 && h.lapType === "持続型") score += 3;
-      if (h.paceBias.senkoBias > 0 && h.lapType === "持続型") score += 4;
-      if (h.paceBias.holdBias > 0 && h.lapType === "加速型") score += 4;
-      if (h.paceBias.accelBias > 0 && h.lapType === "加速型") score += 5;
-      return score;
-    }
-
-    function paceStyleCompatibility(h) {
-      if (!h.paceBias || !h.style) return 0;
-      let score = 0;
-      if (h.paceBias.nigeBias > 0 && (h.style === "逃げ" || h.style === "先行")) score += 4;
-      if (h.paceBias.senkoBias > 0 && (h.style === "先行" || h.style === "差し")) score += 3;
-      if (h.paceBias.holdBias > 0 && (h.style === "差し" || h.style === "追込")) score += 4;
-      if (h.paceBias.accelBias > 0 && (h.style === "差し" || h.style === "追込")) score += 5;
-      return score;
-    }
-
-    function lapStyleCompatibility(h) {
-      if (!h.lapType || !h.style) return 0;
-      if (h.lapType === "加速型" && (h.style === "差し" || h.style === "追込")) return 5;
-      if (h.lapType === "持続型" && (h.style === "先行" || h.style === "差し")) return 4;
-      if (h.lapType === "減速型" && (h.style === "逃げ" || h.style === "先行")) return 4;
-      return 1;
-    }
-
-    function totalPaceCompatibility(h) {
-      return (
-        paceLapCompatibility(h) +
-        paceStyleCompatibility(h) +
-        lapStyleCompatibility(h)
-      );
-    }
-
-    function babaLapCompatibility(h, ctx) {
-      if (!h.lapType || !ctx.baba) return 0;
-      const baba = ctx.baba;
-      let score = 0;
-      if (baba === "良") {
-        if (h.lapType === "加速型") score += 4;
-        if (h.lapType === "持続型") score += 2;
-      }
-      if (baba === "稍重") {
-        if (h.lapType === "持続型") score += 3;
-        if (h.lapType === "減速型") score += 2;
-      }
-      if (baba === "重" || baba === "不良") {
-        if (h.lapType === "持続型") score += 4;
-        if (h.lapType === "減速型") score += 3;
-      }
-      return score;
-    }
-
-    function learnDistanceTypeFromRuns(runs) {
-      let spr = 0, mid = 0, longd = 0;
-      runs.forEach(run => {
-        if (!run.distance) return;
-        const d = run.distance;
-        if (d <= 1600) spr++;
-        else if (d <= 2200) mid++;
-        else longd++;
-      });
-      if (spr >= mid && spr >= longd) return "短距離型";
-      if (mid >= spr && mid >= longd) return "中距離型";
-      return "長距離型";
-    }
-
-    function distanceTypeBonus(h, ctx) {
-      if (!h.distanceType || !ctx.distance) return 0;
-      const d = ctx.distance;
-      if (h.distanceType === "短距離型" && d <= 1600) return 4;
-      if (h.distanceType === "中距離型" && d > 1600 && d <= 2200) return 4;
-      if (h.distanceType === "長距離型" && d > 2200) return 4;
-      return 1;
-    }
-
-    function learnBabaTypeFromRuns(runs) {
-      let good = 0, heavy = 0;
-      runs.forEach(run => {
-        if (!run.baba || !run.raceTime) return;
-        if (run.baba === "良") good++;
-        if (run.baba === "重" || run.baba === "不良" || run.baba === "稍重") heavy++;
-      });
-      if (good === 0 && heavy === 0) return null;
-      if (good >= heavy) return "良馬場型";
-      return "道悪型";
-    }
-
-    function babaTypeBonus(h, ctx) {
-      if (!h.babaType || !ctx.baba) return 0;
-      if (h.babaType === "良馬場型" && ctx.baba === "良") return 4;
-      if (h.babaType === "道悪型" && (ctx.baba === "稍重" || ctx.baba === "重" || ctx.baba === "不良")) return 5;
-      return 1;
-    }
-
-    // ===== ダミー実装（あとで本物に差し替え） =====
-    function guessStyleFrom3Runs(runs) { return "先行"; }
-    function learnLapTypeFromRuns(runs) { return "加速型"; }
-    function learnPaceBiasFromRuns(runs) {
-      return { nigeBias: 0, senkoBias: 0, holdBias: 0, accelBias: 0 };
-    }
-    function detectPaceBiasLabel(bias) {
-      if (!bias) return "—";
-      const arr = [
-        { k: "逃げ癖", v: bias.nigeBias },
-        { k: "先行癖", v: bias.senkoBias },
-        { k: "控え癖", v: bias.holdBias },
-        { k: "加速癖", v: bias.accelBias }
-      ];
-      arr.sort((a,b) => b.v - a.v);
-      return arr[0].v > 0 ? arr[0].k : "—";
-    }
-    function lapScore(run) { return 0; }
-    function lapTypeBonus(h, ctx) { return 0; }
-    function lapTypePaceBonus(h, pace) { return 0; }
-    function timeBonus(h, ctx) { return 0; }
-    function jockeyScore(j) { return 0; }
-    function distanceScore(h, d) { return 0; }
-    function surfaceScore(h, s) { return 0; }
-    function buildLastRunSummary(h) { return "前走情報"; }
-
-    // ===== AI指数 =====
-    function calcAI(h, ctx, pace) {
-      const lastRun = h.runs?.[0];
-      const lapScoreVal = lapScore(lastRun);
-      const lapTypeVal = lapTypeBonus(h, ctx);
-      const lapPaceVal = lapTypePaceBonus(h, pace);
-      const babaLapVal = babaLapCompatibility(h, ctx);
-      const distVal = distanceTypeBonus(h, ctx);
-      const babaVal = babaTypeBonus(h, ctx);
-      const timeVal = timeBonus(h, ctx);
-      const jockeyVal = jockeyScore(h.jockey);
-      const distScoreVal = distanceScore(h, ctx.distance);
-      const surfaceVal = surfaceScore(h, ctx.surface);
-
-      return (
-        30 +
-        lapScoreVal +
-        lapTypeVal +
-        lapPaceVal +
-        h.paceCompatibility +
-        babaLapVal +
-        distVal +
-        babaVal +
-        timeVal +
-        jockeyVal +
-        distScoreVal +
-        surfaceVal
-      );
-    }
-
-    // ===== カードUI =====
-    function renderPastRuns(runs) {
-      if (!runs || runs.length === 0) return "<div>過去走なし</div>";
-      return runs.map(run => `
-        <div class="past-run">
-          <div>${run.surfaceType || ""}${run.distance || ""}m ${run.baba || ""}</div>
-          <div>タイム：${run.raceTime || ""}s</div>
-          <div>通過：${run.firstPos || ""}-${run.secondPos || ""}-${run.thirdPos || ""}-${run.fourthPos || ""}</div>
-          <div>上がり：${run.agariTime || ""}（${run.lastAgariRank || ""}位）</div>
-          <div>ラップ：${run.lapType || ""}</div>
+  horses.forEach(h => {
+    html += `
+      <div class="horse-card">
+        <div class="card-header">
+          <div>${h.name}</div>
+          <div>${h.popularity || "?"}人気 ${h.odds || "?"}倍</div>
         </div>
-      `).join("");
-    }
 
-    function renderLearnData(h) {
-      const b = h.paceBias || { nigeBias: 0, senkoBias: 0, holdBias: 0, accelBias: 0 };
-      return `
-        <div class="learn-block">
-          <div><strong>脚質：</strong> ${h.style || "—"}</div>
-          <div><strong>ラップ適性：</strong> ${h.lapType || "—"}</div>
-          <div><strong>展開癖：</strong>
-            逃げ${b.nigeBias} /
-            先行${b.senkoBias} /
-            控え${b.holdBias} /
-            加速${b.accelBias}
-          </div>
-          <div><strong>距離適性：</strong> ${h.distanceType || "—"}</div>
-          <div><strong>馬場適性：</strong> ${h.babaType || "—"}</div>
-          <div><strong>展開相性スコア：</strong> ${h.paceCompatibility || 0}</div>
-          <div><strong>最終更新：</strong> ${h.updated || "—"}</div>
+        <div class="ai-index">AI指数：${h.ai}</div>
+
+        <div class="section">
+          <div>騎手：${h.jockey || "—"}</div>
+          <div>斤量：${h.weight || "—"}</div>
         </div>
-      `;
-    }
 
-    function renderHorseCardHTML(h) {
-      return `
-        <div class="horse-card">
-          <div class="card-header">
-            <div class="horse-name">${h.name}</div>
-            <div class="odds">${h.popularity || "?"}人気 ${h.odds || "?"}倍</div>
-          </div>
-
-          <div class="ai-index">
-            AI指数：<span class="ai-score">${h.ai ?? "-"}</span>
-          </div>
-
-          <div class="section">
-            <div>展開：${h.pacePredict || "—"}</div>
-            <div>ラップ適性：${h.lapType || "—"}</div>
-            <div>展開癖：${h.paceBiasLabel || "—"}</div>
-            <div>相性スコア：${h.paceCompatibility || 0}</div>
-          </div>
-
-          <div class="section">
-            <div>距離適性：${h.distanceType || "—"}</div>
-            <div>馬場適性：${h.babaType || "—"}</div>
-          </div>
-
-          <div class="section">
-            <div>前走：${h.lastRunSummary || "—"}</div>
-          </div>
-
-          <button class="toggle-detail">過去走を見る ▼</button>
-          <div class="detail-area" style="display:none;">
-            ${renderPastRuns(h.runs)}
-          </div>
-
-          <button class="toggle-learn">学習データを見る ▼</button>
-          <div class="learn-area" style="display:none;">
-            ${renderLearnData(h)}
-          </div>
+        <div class="section">
+          <div>展開：${h.pacePredict || "—"}</div>
+          <div>ラップ適性：${h.lapType || "—"}</div>
+          <div>距離適性：${h.distanceType || "—"}</div>
+          <div>馬場適性：${h.babaType || "—"}</div>
         </div>
-      `;
+      </div>
+    `;
+  });
+
+  area.innerHTML = html;
+}
+
+// ===============================
+// メイン：URLから解析
+// ===============================
+document.getElementById("analyzeBtn").addEventListener("click", async () => {
+  const url = document.getElementById("raceInput").value.trim();
+  if (!url.startsWith("http")) {
+    alert("netkeibaの出馬表URLを貼ってください");
+    return;
+  }
+
+  try {
+    const html = await fetchHTMLfromURL(url);
+    const doc = htmlToDOM(html);
+
+    const horses = parseRaceFromDOM(doc);
+    if (horses.length === 0) {
+      alert("出馬表テーブルが見つかりませんでした");
+      return;
     }
 
-    function renderAllCards(horses) {
-      const area = document.getElementById("resultArea");
-      let html = "";
-      horses.forEach(h => {
-        html += renderHorseCardHTML(h);
-      });
-      area.innerHTML = html;
+    const ctx = extractRaceContextFromDOM(doc);
+    enrichHorseMeta(horses);
+    const pace = predictPace(horses);
 
-      // イベント付与
-      document.querySelectorAll(".horse-card").forEach(card => {
-        const detailBtn = card.querySelector(".toggle-detail");
-        const detailArea = card.querySelector(".detail-area");
-        detailBtn.addEventListener("click", e => {
-          const open = detailArea.style.display === "block";
-          detailArea.style.display = open ? "none" : "block";
-          e.target.textContent = open ? "過去走を見る ▼" : "過去走を閉じる ▲";
-        });
+    horses.forEach(h => {
+      h.pacePredict = pace;
+      h.ai = calcAI(h, ctx, pace);
+    });
 
-        const learnBtn = card.querySelector(".toggle-learn");
-        const learnArea = card.querySelector(".learn-area");
-        learnBtn.addEventListener("click", e => {
-          const open = learnArea.style.display === "block";
-          learnArea.style.display = open ? "none" : "block";
-          e.target.textContent = open ? "学習データを見る ▼" : "学習データを閉じる ▲";
-        });
-      });
-    }
+    renderAllCards(horses);
+  } catch (e) {
+    console.error(e);
+    alert("URLから出馬表を取得できませんでした");
+  }
+});
+</script>
 
-    // 起動時に学習データ読み込み
-    loadHorseLearn();
-  </script>
 </body>
 </html>
